@@ -9,7 +9,7 @@ import (
 type Stash struct {
 	dst       string
 	asset     string
-	keyValues map[string]interface{}
+	keyValues map[string]string
 }
 
 func NewStash(dst, asset string) (*Stash, error) {
@@ -23,7 +23,7 @@ func NewStash(dst, asset string) (*Stash, error) {
 		return nil, err
 	}
 
-	var keyValues map[string]interface{}
+	var keyValues map[string]string
 
 	if stashRC != nil {
 		defer stashRC.Close()
@@ -33,7 +33,7 @@ func NewStash(dst, asset string) (*Stash, error) {
 	}
 
 	if keyValues == nil {
-		keyValues = make(map[string]interface{}, 0)
+		keyValues = make(map[string]string, 0)
 	}
 
 	return &Stash{
@@ -56,21 +56,9 @@ func (stash *Stash) Contains(id string) bool {
 	return ok
 }
 
-func (stash *Stash) set(key string, value interface{}) error {
+func (stash *Stash) Set(key string, value string) error {
 	stash.keyValues[key] = value
 	return stash.write()
-}
-
-func (stash *Stash) SetString(key string, value string) error {
-	return stash.set(key, value)
-}
-
-func (stash *Stash) SetStringSlice(key string, values []string) error {
-	return stash.set(key, values)
-}
-
-func (stash *Stash) SetInt(key string, value int) error {
-	return stash.set(key, value)
 }
 
 func (stash *Stash) write() error {
@@ -87,53 +75,17 @@ func (stash *Stash) write() error {
 	return kvStash.Set(stash.asset, buf)
 }
 
-func (stash *Stash) setMany(keyValues map[string]interface{}) error {
+func (stash *Stash) SetMany(keyValues map[string]string) error {
 	for k, v := range keyValues {
 		stash.keyValues[k] = v
 	}
 	return stash.write()
 }
 
-func (stash *Stash) SetManyStrings(keyValues map[string]string) error {
-	for k, v := range keyValues {
-		stash.keyValues[k] = v
-	}
-	return stash.write()
-}
-
-func (stash *Stash) SetManyStringSlices(keyValues map[string][]string) error {
-	for k, v := range keyValues {
-		stash.keyValues[k] = v
-	}
-	return stash.write()
-}
-
-func (stash *Stash) SetManyInts(keyValues map[string]int) error {
-	for k, v := range keyValues {
-		stash.keyValues[k] = v
-	}
-	return stash.write()
-}
-
-func (stash *Stash) get(key string) (interface{}, bool) {
+func (stash *Stash) Get(key string) (string, bool) {
 	if stash == nil || stash.keyValues == nil {
 		return "", false
 	}
 	val, ok := stash.keyValues[key]
 	return val, ok
-}
-
-func (stash *Stash) GetString(key string) (string, bool) {
-	val, ok := stash.get(key)
-	return val.(string), ok
-}
-
-func (stash *Stash) GetStringSlice(key string) ([]string, bool) {
-	val, ok := stash.get(key)
-	return val.([]string), ok
-}
-
-func (stash *Stash) GetInt(key string) (int, bool) {
-	val, ok := stash.get(key)
-	return val.(int), ok
 }
