@@ -9,7 +9,7 @@ import (
 type Stash struct {
 	dst       string
 	asset     string
-	keyValues map[string]string
+	keyValues map[string][]string
 }
 
 func NewStash(dst, asset string) (*Stash, error) {
@@ -23,7 +23,7 @@ func NewStash(dst, asset string) (*Stash, error) {
 		return nil, err
 	}
 
-	var keyValues map[string]string
+	var keyValues map[string][]string
 
 	if stashRC != nil {
 		defer stashRC.Close()
@@ -33,7 +33,7 @@ func NewStash(dst, asset string) (*Stash, error) {
 	}
 
 	if keyValues == nil {
-		keyValues = make(map[string]string, 0)
+		keyValues = make(map[string][]string, 0)
 	}
 
 	return &Stash{
@@ -56,8 +56,13 @@ func (stash *Stash) Contains(id string) bool {
 	return ok
 }
 
-func (stash *Stash) Set(key string, value string) error {
-	stash.keyValues[key] = value
+func (stash *Stash) Add(key string, value string) error {
+	for _, val := range stash.keyValues[key] {
+		if val == value {
+			return nil
+		}
+	}
+	stash.keyValues[key] = append(stash.keyValues[key], value)
 	return stash.write()
 }
 
@@ -77,14 +82,19 @@ func (stash *Stash) write() error {
 
 func (stash *Stash) SetMany(keyValues map[string]string) error {
 	for k, v := range keyValues {
-		stash.keyValues[k] = v
+		for _, val := range stash.keyValues[k] {
+			if val == v {
+				continue
+			}
+		}
+		stash.keyValues[k] = append(stash.keyValues[k], v)
 	}
 	return stash.write()
 }
 
-func (stash *Stash) Get(key string) (string, bool) {
+func (stash *Stash) Get(key string) ([]string, bool) {
 	if stash == nil || stash.keyValues == nil {
-		return "", false
+		return nil, false
 	}
 	val, ok := stash.keyValues[key]
 	return val, ok
