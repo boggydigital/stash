@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"github.com/boggydigital/kvas"
+	"strings"
 )
 
 type Stash struct {
@@ -113,4 +114,22 @@ func (stash *Stash) GetAll(key string) ([]string, bool) {
 	}
 	val, ok := stash.keyValues[key]
 	return val, ok
+}
+
+func (stash *Stash) Search(term string, anyCase bool) []string {
+	if anyCase {
+		term = strings.ToLower(term)
+	}
+	matchingKeys := make([]string, 0)
+	for key, values := range stash.keyValues {
+		for _, val := range values {
+			if anyCase {
+				val = strings.ToLower(val)
+			}
+			if strings.Contains(val, term) {
+				matchingKeys = append(matchingKeys, key)
+			}
+		}
+	}
+	return matchingKeys
 }
