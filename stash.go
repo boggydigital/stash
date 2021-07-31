@@ -74,6 +74,11 @@ func (stash *Stash) Add(key string, value string) error {
 	return stash.write()
 }
 
+func (stash *Stash) Set(key string, values ...string) error {
+	stash.keyValues[key] = values
+	return stash.write()
+}
+
 func (stash *Stash) Remove(key string, value string) error {
 	if !stash.ContainsValue(key, value) {
 		return nil
@@ -143,7 +148,7 @@ func (stash *Stash) GetAll(key string) ([]string, bool) {
 	return val, ok
 }
 
-func (stash *Stash) Search(terms []string, scope []string, ignoreCase bool) []string {
+func (stash *Stash) Search(terms []string, scope []string, ignoreCase bool, fullMatch bool) []string {
 	if scope == nil {
 		scope = stash.All()
 	}
@@ -162,8 +167,14 @@ func (stash *Stash) Search(terms []string, scope []string, ignoreCase bool) []st
 				if ignoreCase {
 					val = strings.ToLower(val)
 				}
-				if strings.Contains(val, term) {
-					matches[key] = true
+				if fullMatch {
+					if val == term {
+						matches[key] = true
+					}
+				} else {
+					if strings.Contains(val, term) {
+						matches[key] = true
+					}
 				}
 			}
 		}
